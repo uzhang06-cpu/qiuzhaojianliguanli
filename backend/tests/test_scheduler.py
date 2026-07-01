@@ -15,7 +15,7 @@ class TestPreEvent:
     """临期强提醒测试。"""
 
     def _create(self, client: TestClient, next_ddl: str):
-        return client.post("/positions", json={
+        return client.post("/api/positions", json={
             "company": "字节跳动", "position": "前端",
             "status": "human_interview", "next_ddl": next_ddl,
         }).json()
@@ -46,7 +46,7 @@ class TestPostReview:
     """复盘提醒测试。"""
 
     def _create(self, client: TestClient, next_ddl: str, notes=None):
-        return client.post("/positions", json={
+        return client.post("/api/positions", json={
             "company": "字节跳动", "position": "前端",
             "status": "human_interview", "next_ddl": next_ddl,
             "notes": notes,
@@ -79,11 +79,11 @@ class TestDeadState:
 
     def _create_stagnant(self, client: TestClient, db_session: Session, days: int):
         # 先用默认状态创建（status=interested），创建日志是新的但不影响
-        pos = client.post("/positions", json={
+        pos = client.post("/api/positions", json={
             "company": "字节跳动", "position": "前端",
         }).json()
         # 直接调状态变更到 applied，再改日志时间为过去
-        client.post(f"/positions/{pos['id']}/status", json={
+        client.post(f"/api/positions/{pos['id']}/status", json={
             "status": "applied", "changed_by": "test",
         })
         # 把最近一条 to_status=applied 的日志时间改为 days 天前
@@ -116,11 +116,11 @@ class TestNotificationsAPI:
 
     def test_get_notifications(self, client: TestClient, db_session: Session):
         ddl = (datetime.now() + timedelta(hours=1)).isoformat()
-        client.post("/positions", json={
+        client.post("/api/positions", json={
             "company": "字节", "position": "前端",
             "status": "human_interview", "next_ddl": ddl,
         })
-        resp = client.get("/notifications")
+        resp = client.get("/api/notifications")
         assert resp.status_code == 200
         data = resp.json()
         assert "notifications" in data
@@ -128,6 +128,6 @@ class TestNotificationsAPI:
         assert len(data["notifications"]) >= 1
 
     def test_empty(self, client: TestClient, db_session: Session):
-        resp = client.get("/notifications")
+        resp = client.get("/api/notifications")
         assert resp.status_code == 200
         assert resp.json()["total_positions"] == 0

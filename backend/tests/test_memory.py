@@ -170,18 +170,18 @@ class TestMemoryIntegration:
 
 
 class TestFeedbackAPI:
-    """/agent/feedback 端点测试。"""
+    """/api/agent/feedback 端点测试。"""
 
     def test_feedback_endpoint(self, client: TestClient, db_session: Session):
         """提交修正数据。"""
         # 先调一次 parse 获得 conversation_id
-        parse_resp = client.post("/agent/parse", json={"text": "字节跳动 前端开发 25k 北京", "session_id": "fb-test"})
+        parse_resp = client.post("/api/agent/parse", json={"text": "字节跳动 前端开发 25k 北京", "session_id": "fb-test"})
         assert parse_resp.status_code == 200
         conv_id = parse_resp.json()["conversation_id"]
         assert conv_id > 0
 
         # 提交修正
-        resp = client.post("/agent/feedback", json={
+        resp = client.post("/api/agent/feedback", json={
             "conversation_id": conv_id,
             "session_id": "fb-test",
             "corrections": [
@@ -196,7 +196,7 @@ class TestFeedbackAPI:
 
     def test_feedback_no_corrections(self, client: TestClient, db_session: Session):
         """无修正数据时返回 0。"""
-        resp = client.post("/agent/feedback", json={
+        resp = client.post("/api/agent/feedback", json={
             "conversation_id": 1,
             "session_id": "test",
             "corrections": [],

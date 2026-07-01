@@ -286,7 +286,7 @@ class TestPipeline:
     """完整管线集成测试。"""
 
     def test_pipeline_create_position(self, client: TestClient):
-        resp = client.post("/agent/parse", json={
+        resp = client.post("/api/agent/parse", json={
             "text": "字节跳动 前端开发工程师 25k-40k 北京"
         })
         assert resp.status_code == 200
@@ -303,7 +303,7 @@ class TestPipeline:
         assert "字节" in companies[0]["value"]
 
     def test_pipeline_update_interview(self, client: TestClient):
-        resp = client.post("/agent/parse", json={
+        resp = client.post("/api/agent/parse", json={
             "text": "字节跳动前端开发二面通知，下周三下午2点，腾讯会议链接 https://meeting.tencent.com/abc"
         })
         assert resp.status_code == 200
@@ -316,7 +316,7 @@ class TestPipeline:
         assert len(ddl_fields) > 0
 
     def test_pipeline_unknown_triggers_review(self, client: TestClient):
-        resp = client.post("/agent/parse", json={
+        resp = client.post("/api/agent/parse", json={
             "text": "你好啊"
         })
         assert resp.status_code == 200
@@ -325,12 +325,12 @@ class TestPipeline:
         assert data["needs_human_review"] is True
 
     def test_pipeline_empty_text_rejected(self, client: TestClient):
-        resp = client.post("/agent/parse", json={"text": ""})
+        resp = client.post("/api/agent/parse", json={"text": ""})
         assert resp.status_code == 422  # Validation error
 
     def test_pipeline_with_skill_details(self, client: TestClient):
         """结果中应包含各 Skill 的执行明细。"""
-        resp = client.post("/agent/parse", json={
+        resp = client.post("/api/agent/parse", json={
             "text": "字节跳动 前端开发 25k 北京"
         })
         data = resp.json()["data"]

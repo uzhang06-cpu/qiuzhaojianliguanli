@@ -30,7 +30,7 @@ class TestAuthAPI:
     """Auth API 端点测试。"""
 
     def test_register(self, client: TestClient):
-        resp = client.post("/auth/register", json={
+        resp = client.post("/api/auth/register", json={
             "email": "new@user.com",
             "password": "pass123",
         })
@@ -40,25 +40,25 @@ class TestAuthAPI:
         assert data["user"]["email"] == "new@user.com"
 
     def test_register_duplicate(self, client: TestClient):
-        client.post("/auth/register", json={"email": "dup@test.com", "password": "pass123"})
-        resp = client.post("/auth/register", json={"email": "dup@test.com", "password": "pass456"})
+        client.post("/api/auth/register", json={"email": "dup@test.com", "password": "pass123"})
+        resp = client.post("/api/auth/register", json={"email": "dup@test.com", "password": "pass456"})
         assert resp.status_code == 409
 
     def test_login(self, client: TestClient):
         # 先注册
         email, pwd = "login@test.com", "mypassword"
-        client.post("/auth/register", json={"email": email, "password": pwd})
+        client.post("/api/auth/register", json={"email": email, "password": pwd})
 
         # 再登录
-        resp = client.post("/auth/login", json={"email": email, "password": pwd})
+        resp = client.post("/api/auth/login", json={"email": email, "password": pwd})
         assert resp.status_code == 200
         data = resp.json()
         assert "access_token" in data
         assert data["user"]["email"] == email
 
     def test_login_wrong_password(self, client: TestClient):
-        client.post("/auth/register", json={"email": "fail@test.com", "password": "correct"})
-        resp = client.post("/auth/login", json={"email": "fail@test.com", "password": "wrong"})
+        client.post("/api/auth/register", json={"email": "fail@test.com", "password": "correct"})
+        resp = client.post("/api/auth/login", json={"email": "fail@test.com", "password": "wrong"})
         assert resp.status_code == 401
 
     def test_me_requires_auth(self, client: TestClient):
@@ -81,12 +81,12 @@ class TestAuthAPI:
 
         app.dependency_overrides[get_db] = _override
         c = TestClient(app)
-        resp = c.get("/auth/me")
+        resp = c.get("/api/auth/me")
         assert resp.status_code == 401
         app.dependency_overrides.clear()
 
     def test_me_returns_user(self, client: TestClient):
-        resp = client.get("/auth/me")
+        resp = client.get("/api/auth/me")
         assert resp.status_code == 200
         data = resp.json()
         assert data["email"] == "test@test.com"
