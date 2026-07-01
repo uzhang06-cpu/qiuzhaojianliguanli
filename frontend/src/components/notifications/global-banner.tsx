@@ -32,7 +32,10 @@ export function GlobalBanner({ pollInterval = 30000 }: GlobalBannerProps) {
 
   const fetchNotifications = useCallback(async () => {
     try {
-      const res = await fetch('/api/notifications')
+      const token = localStorage.getItem('smarttracker_token')
+      const res = await fetch('/api/notifications', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      })
       if (!res.ok) return
       const data = await res.json()
       const banners: BannerItem[] = (data.notifications || [])

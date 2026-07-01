@@ -11,6 +11,10 @@ from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+# 导入所有模型确保 Base.metadata.create_all 能建所有表
+import app.agent.memory.models  # noqa: F401 — agent_conversations + agent_corrections
+import app.auth.models  # noqa: F401 — users
+
 from app.agent.router import router as agent_router
 from app.auth.router import router as auth_router
 from app.database import Base, engine
