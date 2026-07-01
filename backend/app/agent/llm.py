@@ -536,7 +536,7 @@ class DeepSeekBackend(LLMBackend):
             api_key=api_key or os.getenv("DEEPSEEK_API_KEY"),
             base_url=base_url or os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
         )
-        self.model = model or os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+        self.model = model or os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
 
     def _call(self, system_prompt: str, user_prompt: str) -> str:
         resp = self.client.chat.completions.create(

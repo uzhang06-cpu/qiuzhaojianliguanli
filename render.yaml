@@ -22,7 +22,7 @@ services:
       - key: DEEPSEEK_BASE_URL
         value: https://api.deepseek.com
       - key: DEEPSEEK_MODEL
-        value: deepseek-chat
+        value: deepseek-v4-flash
 
       # ── LLM 备选：OpenAI（取消注释，注释上方 DeepSeek 三行） ──
       # - key: OPENAI_API_KEY
