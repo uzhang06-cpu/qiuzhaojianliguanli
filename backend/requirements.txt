@@ -1,0 +1,17 @@
+# SmartTracker Backend Dependencies
+# Generated from the local environment — pinning known-good versions
+
+fastapi>=0.128.0
+uvicorn[standard]>=0.39.0
+sqlalchemy>=1.4.0,<2.0  # 1.4 for current env compatibility
+pydantic>=2.12.0
+pydantic-settings>=2.11.0
+alembic>=1.13.0
+python-dotenv>=1.2.0
+
+# Production on Render
+# psycopg2-binary>=2.9.0
+
+# Dev / Test
+pytest>=8.4.0
+httpx>=0.28.0

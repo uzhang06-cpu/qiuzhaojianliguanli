@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design System Tokens ───────────────────────────────────────────
+   Product: SmartTracker — Job Search Management Dashboard
+   Style: Modern Professional · Minimal · Data-dense
+   Primary: Indigo (#6366f1)
+   Typography: Inter (sans) / JetBrains Mono (mono)
+   Spacing: 4/8dp system
+   ───────────────────────────────────────────────────────────────── */
+
+@layer base {
+  :root {
+    /* Light theme */
+    --background: 210 40% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 33% 95%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 33% 95%;
+    --muted-foreground: 215 20% 50%;
+    --accent: 210 33% 95%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 28% 88%;
+    --input: 214 28% 88%;
+    --ring: 239 84% 67%;
+    --radius: 0.625rem;
+
+    /* Pipeline colors */
+    --pipeline-interested: #6366f1;
+    --pipeline-applied: #3b82f6;
+    --pipeline-assessment: #f59e0b;
+    --pipeline-ai: #8b5cf6;
+    --pipeline-interview: #06b6d4;
+    --pipeline-offer: #22c55e;
+    --pipeline-archived: #6b7280;
+
+    /* Alert colors */
+    --alert-danger: #ef4444;
+    --alert-warning: #f97316;
+    --alert-info: #0ea5e9;
+    --alert-success: #22c55e;
+
+    /* Shadows — 3-tier elevation */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.03);
+    --shadow-lg: 0 12px 32px -8px rgb(0 0 0 / 0.08), 0 4px 12px -2px rgb(0 0 0 / 0.04);
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 96%;
+    --card: 222 47% 10%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 63% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 239 84% 67%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Focus ring utility */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+}
+
+/* ── Component Layer ─────────────────────────────────────────────── */
+
+@layer components {
+  /* Pipeline status badges */
+  .badge-pipeline {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold leading-none;
+  }
+  .badge-pipeline-interested { @apply bg-[#6366f1]/10 text-[#6366f1]; }
+  .badge-pipeline-applied { @apply bg-[#3b82f6]/10 text-[#3b82f6]; }
+  .badge-pipeline-assessment { @apply bg-[#f59e0b]/10 text-[#f59e0b]; }
+  .badge-pipeline-ai_interview { @apply bg-[#8b5cf6]/10 text-[#8b5cf6]; }
+  .badge-pipeline-human_interview { @apply bg-[#06b6d4]/10 text-[#06b6d4]; }
+  .badge-pipeline-offer_evaluation { @apply bg-[#22c55e]/10 text-[#22c55e]; }
+  .badge-pipeline-archived { @apply bg-[#6b7280]/10 text-[#6b7280]; }
+
+  /* DDL urgency */
+  .ddl-urgent {
+    @apply text-[#ef4444] font-semibold;
+  }
+  .ddl-soon {
+    @apply text-[#f97316] font-medium;
+  }
+
+  /* Cards */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-md hover:-translate-y-[1px];
+  }
+
+  /* Kanban column drag target */
+  .column-drop-active {
+    @apply ring-2 ring-primary/30 bg-primary/[0.03];
+  }
+
+  /* Notification dot */
+  .notif-dot {
+    @apply absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-destructive ring-2 ring-background;
+  }
+
+  /* Skeleton loading */
+  .skeleton {
+    @apply animate-pulse rounded-md bg-muted;
+  }
+}
+
+/* ── Animation utilities ─────────────────────────────────────────── */
+
+@layer utilities {
+  .animate-slide-up {
+    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .animate-slide-down {
+    animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.2s ease-out;
+  }
+  .animate-scale-in {
+    animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.25); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
+
+/* ── DnD helpers ─────────────────────────────────────────────────── */
+
+.dragging { @apply opacity-40 scale-95 rotate-[2deg]; }
+.drag-over { @apply bg-primary/[0.03] ring-2 ring-primary/20 rounded-lg; }

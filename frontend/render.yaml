@@ -1,0 +1,15 @@
+# SmartTracker Frontend — Render Static Site
+# https://render.com/docs/static-sites
+
+services:
+  - type: static
+    name: smarttracker-web
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    envVars:
+      - key: VITE_API_BASE
+        value: https://smarttracker-api.onrender.com
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
