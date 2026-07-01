@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -12,6 +12,13 @@ class Position(Base):
     __tablename__ = "positions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # 用户隔离
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False, index=True, comment="所属用户",
+    )
+
     company = Column(String(200), nullable=False, comment="公司名称")
     position = Column(String(200), nullable=False, comment="岗位名称")
 
@@ -30,7 +37,7 @@ class Position(Base):
     job_description = Column(Text, nullable=True, comment="原始 JD 文本")
 
     # 时间信息
-    next_ddl = Column(DateTime, nullable=True, comment="最近待办时间（面试/笔试时间）")
+    next_ddl = Column(DateTime, nullable=True, comment="最近待办时间")
     interview_link = Column(String(500), nullable=True, comment="面试链接")
     interview_platform = Column(String(100), nullable=True, comment="面试平台")
 
@@ -55,6 +62,7 @@ class Position(Base):
         order_by="StatusLog.created_at.desc()",
         cascade="all, delete-orphan",
     )
+    owner = relationship("User", back_populates="positions")
 
     def __repr__(self):
-        return f"<Position(id={self.id}, company={self.company}, status={self.status})>"
+        return f"<Position(id={self.id}, user={self.user_id}, {self.company})>"

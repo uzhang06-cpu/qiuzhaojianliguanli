@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.agent.router import router as agent_router
+from app.auth.router import router as auth_router
 from app.database import Base, engine
 from app.routers import notifications, positions, status_logs
 
@@ -44,6 +45,7 @@ app.include_router(positions.router)
 app.include_router(status_logs.router)
 app.include_router(notifications.router)
 app.include_router(agent_router)
+app.include_router(auth_router)
 
 
 @app.get("/health")

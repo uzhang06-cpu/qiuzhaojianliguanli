@@ -2,6 +2,7 @@
 岗位 CRUD 与状态变更 API。
 
 每个变更状态的请求都会自动向 status_logs 表写入一条日志。
+所有数据按 user_id 隔离，用户只能看到自己的数据。
 """
 from datetime import datetime
 from typing import List, Optional
@@ -9,6 +10,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
+from app.auth.dependencies import get_current_user
+from app.auth.models import User
 from app.database import get_db
 from app.engine.pipeline import PipelineStatus
 from app.engine.state_machine import can_transition
@@ -34,9 +37,10 @@ def list_positions(
     sort_by: Optional[str] = Query("updated_at", description="排序字段"),
     sort_dir: Optional[str] = Query("desc", description="排序方向"),
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    """获取岗位列表，支持筛选、搜索、排序。"""
-    query = db.query(Position)
+    """获取当前用户的岗位列表。"""
+    query = db.query(Position).filter(Position.user_id == user.id)
 
     if is_active is not None:
         query = query.filter(Position.is_active == is_active)
@@ -50,7 +54,6 @@ def list_positions(
             Position.company.ilike(like) | Position.position.ilike(like)
         )
 
-    # 排序
     sort_column = getattr(Position, sort_by, Position.updated_at)
     if sort_dir == "asc":
         query = query.order_by(sort_column.asc())
@@ -64,9 +67,17 @@ def list_positions(
 
 
 @router.get("/{position_id}", response_model=PositionResponse)
-def get_position(position_id: int, db: Session = Depends(get_db)):
-    """获取单个岗位详情。"""
-    position = db.query(Position).filter(Position.id == position_id).first()
+def get_position(
+    position_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """获取单个岗位详情（仅限自己的数据）。"""
+    position = (
+        db.query(Position)
+        .filter(Position.id == position_id, Position.user_id == user.id)
+        .first()
+    )
     if not position:
         raise HTTPException(status_code=404, detail="岗位不存在")
     return position
@@ -76,9 +87,14 @@ def get_position(position_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=PositionResponse, status_code=201)
-def create_position(data: PositionCreate, db: Session = Depends(get_db)):
-    """创建新岗位。"""
+def create_position(
+    data: PositionCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """创建新岗位（归当前用户）。"""
     position = Position(
+        user_id=user.id,
         company=data.company,
         position=data.position,
         status=data.status.value,
@@ -93,9 +109,8 @@ def create_position(data: PositionCreate, db: Session = Depends(get_db)):
         updated_at=datetime.now(),
     )
     db.add(position)
-    db.flush()  # 获取 position.id
+    db.flush()
 
-    # 写初始状态变更日志
     log = StatusLog(
         position_id=position.id,
         from_status="",
@@ -117,9 +132,14 @@ def update_position(
     position_id: int,
     data: PositionUpdate,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    """更新岗位信息（不变更状态）。"""
-    position = db.query(Position).filter(Position.id == position_id).first()
+    """更新岗位信息（仅限自己的数据）。"""
+    position = (
+        db.query(Position)
+        .filter(Position.id == position_id, Position.user_id == user.id)
+        .first()
+    )
     if not position:
         raise HTTPException(status_code=404, detail="岗位不存在")
 
@@ -144,27 +164,29 @@ def transition_status(
     position_id: int,
     data: PositionStatusUpdate,
     db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    """变更岗位状态，自动校验流转规则并写日志。"""
-    position = db.query(Position).filter(Position.id == position_id).first()
+    """变更岗位状态（仅限自己的数据）。"""
+    position = (
+        db.query(Position)
+        .filter(Position.id == position_id, Position.user_id == user.id)
+        .first()
+    )
     if not position:
         raise HTTPException(status_code=404, detail="岗位不存在")
 
     from_status = PipelineStatus(position.status)
     to_status = data.status
 
-    # 状态机校验
     result = can_transition(from_status, to_status)
     if not result.success:
         raise HTTPException(status_code=400, detail=result.message)
 
-    # 执行变更
     old_status = position.status
     position.status = to_status.value
     position.updated_at = datetime.now()
     db.flush()
 
-    # 写状态变更日志
     log = StatusLog(
         position_id=position.id,
         from_status=old_status,
@@ -178,13 +200,21 @@ def transition_status(
     return position
 
 
-# ── Delete (Soft) ───────────────────────────────────────────────────
+# ── Delete ──────────────────────────────────────────────────────────
 
 
 @router.delete("/{position_id}")
-def delete_position(position_id: int, db: Session = Depends(get_db)):
-    """软删除岗位。"""
-    position = db.query(Position).filter(Position.id == position_id).first()
+def delete_position(
+    position_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """软删除岗位（仅限自己的数据）。"""
+    position = (
+        db.query(Position)
+        .filter(Position.id == position_id, Position.user_id == user.id)
+        .first()
+    )
     if not position:
         raise HTTPException(status_code=404, detail="岗位不存在")
 

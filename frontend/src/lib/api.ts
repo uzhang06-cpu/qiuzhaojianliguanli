@@ -17,6 +17,11 @@ class ApiError extends Error {
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const url = `${BASE}${path}`
   const headers: Record<string, string> = {}
+
+  // 自动附加 JWT token
+  const token = localStorage.getItem('smarttracker_token')
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
   }
@@ -28,6 +33,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   })
 
   if (!res.ok) {
+    // 401 → token 过期，清除登录状态
+    if (res.status === 401) {
+      localStorage.removeItem('smarttracker_token')
+      localStorage.removeItem('smarttracker_user')
+      window.location.href = '/'
+    }
     const detail = await res.json().catch(() => ({ detail: res.statusText }))
     throw new ApiError(res.status, detail.detail || res.statusText)
   }

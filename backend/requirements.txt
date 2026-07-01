@@ -12,6 +12,10 @@ python-dotenv>=1.2.0
 # Production database (PostgreSQL)
 psycopg2-binary>=2.9.0
 
+# Auth
+passlib[bcrypt]>=1.7.4
+pyjwt>=2.0.0
+
 # Dev / Test
 pytest>=8.4.0
 httpx>=0.28.0

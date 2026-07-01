@@ -43,22 +43,20 @@ class ScanResult:
     notifications: list[Notification] = field(default_factory=list)
 
 
-def scan(db: Session) -> ScanResult:
+def scan(db: Session, user_id: Optional[int] = None) -> ScanResult:
     """
-    执行一次全量扫描，返回所有需要触发的通知。
+    执行一次扫描，返回需要触发的通知。
 
-    在以下两种场景下使用:
-      - 后端定时任务调用 (e.g. APScheduler 每 5 分钟)
-      - 前端主动轮询 GET /notifications
+    参数:
+      user_id: 可选，只扫描指定用户的数据。不传则扫全部。
     """
     now = datetime.now()
     result = ScanResult(scanned_at=now.isoformat())
 
-    active_positions = (
-        db.query(Position)
-        .filter(Position.is_active == True)
-        .all()
-    )
+    query = db.query(Position).filter(Position.is_active == True)
+    if user_id is not None:
+        query = query.filter(Position.user_id == user_id)
+    active_positions = query.all()
     result.total_positions = len(active_positions)
 
     for pos in active_positions:
