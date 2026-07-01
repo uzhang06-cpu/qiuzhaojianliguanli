@@ -2,11 +2,14 @@
 SmartTracker — 智能求职管理系统后端入口。
 
 FastAPI 应用实例，注册路由与生命周期钩子。
+生产环境同时托管前端静态文件（合一部署）。
 """
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.agent.router import router as agent_router
 from app.database import Base, engine
@@ -47,3 +50,10 @@ app.include_router(agent_router)
 def health_check():
     """健康检查端点。"""
     return {"status": "ok", "version": "0.1.0"}
+
+
+# ── 生产环境：托管前端静态文件 ──────────────────────────────────────
+# 前端构建后的文件放在 frontend/dist/，Render 部署时一起上传
+_frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+if _frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(_frontend_dist), html=True), name="frontend")
