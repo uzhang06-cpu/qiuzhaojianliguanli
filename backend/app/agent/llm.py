@@ -7,12 +7,15 @@ LLM 后端抽象层 — 支持 Mock / OpenAI / DashScope 三种模式。
 from __future__ import annotations
 
 import abc
+import logging
 import os
 import re
 from datetime import datetime, timedelta
 from typing import Optional
 
 from app.agent.models import IntentType, SkillType
+
+logger = logging.getLogger(__name__)
 
 
 # ── 抽象基类 ─────────────────────────────────────────────────────────
@@ -609,20 +612,64 @@ class DeepSeekBackend(LLMBackend):
 _BACKEND: Optional[LLMBackend] = None
 
 
+class FallbackBackend(LLMBackend):
+    """
+    带故障回退的 LLM 后端包装器。
+
+    当 primary 后端抛出异常时，自动降级到 Mock 后端，
+    确保管线在任何情况下都能返回结构化结果（而非 500）。
+    """
+
+    def __init__(self, primary: LLMBackend):
+        self._primary = primary
+        self._fallback = MockLLMBackend()
+        self._has_fallen_back = False
+
+    def classify_intent(self, text: str, system_time: datetime) -> tuple[IntentType, float, str]:
+        try:
+            return self._primary.classify_intent(text, system_time)
+        except Exception as e:
+            if not self._has_fallen_back:
+                logger.warning("LLM 主后端 classify_intent 失败 (%s: %s)，降级到 Mock", type(e).__name__, e)
+                self._has_fallen_back = True
+            return self._fallback.classify_intent(text, system_time)
+
+    def extract_entities(self, text: str, skill: SkillType, system_time: datetime) -> list[dict]:
+        try:
+            return self._primary.extract_entities(text, skill, system_time)
+        except Exception as e:
+            if not self._has_fallen_back:
+                logger.warning("LLM 主后端 extract_entities(%s) 失败 (%s: %s)，降级到 Mock", skill.value, type(e).__name__, e)
+                self._has_fallen_back = True
+            return self._fallback.extract_entities(text, skill, system_time)
+
+    def validate_and_fix(self, data: dict, schema_hint: str) -> tuple[bool, dict, Optional[str]]:
+        try:
+            return self._primary.validate_and_fix(data, schema_hint)
+        except Exception as e:
+            if not self._has_fallen_back:
+                logger.warning("LLM 主后端 validate_and_fix 失败 (%s: %s)，降级到 Mock", type(e).__name__, e)
+                self._has_fallen_back = True
+            return self._fallback.validate_and_fix(data, schema_hint)
+
+
 def get_llm_backend() -> LLMBackend:
     """获取当前 LLM 后端（单例）。
 
     优先级: DeepSeek > OpenAI > Mock
     设置对应环境变量即可自动切换，无需改代码。
+
+    API 后端（DeepSeek/OpenAI）异常时自动降级到 Mock，
+    确保管线不会因 LLM 不可用而崩溃。
     """
     global _BACKEND
     if _BACKEND is not None:
         return _BACKEND
 
     if os.getenv("DEEPSEEK_API_KEY"):
-        _BACKEND = DeepSeekBackend()
+        _BACKEND = FallbackBackend(DeepSeekBackend())
     elif os.getenv("OPENAI_API_KEY"):
-        _BACKEND = OpenAIBackend()
+        _BACKEND = FallbackBackend(OpenAIBackend())
     else:
         _BACKEND = MockLLMBackend()
 

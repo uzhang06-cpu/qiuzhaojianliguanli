@@ -4,12 +4,19 @@ SmartTracker — 智能求职管理系统后端入口。
 FastAPI 应用实例，注册路由与生命周期钩子。
 生产环境同时托管前端静态文件（合一部署）。
 """
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+# 配置日志输出（确保 traceback 可见）
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 # 导入所有模型确保 Base.metadata.create_all 能建所有表
 import app.agent.memory.models  # noqa: F401 — agent_conversations + agent_corrections

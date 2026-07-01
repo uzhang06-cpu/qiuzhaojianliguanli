@@ -1,6 +1,8 @@
 """
 Agent API 路由 — AI 闪电录入 + 用户反馈（纠错学习）。
 """
+import logging
+import traceback
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,6 +13,8 @@ from app.agent.memory.integration import inject_memory_context, save_agent_memor
 from app.agent.models import AgentResult
 from app.agent.pipeline import run as run_agent
 from app.database import get_db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
@@ -86,7 +90,8 @@ def agent_parse(req: ParseRequest, db: Session = Depends(get_db)):
             message="解析完成" if not result.needs_human_review else result.human_review_reason,
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Agent 管线异常: {str(e)}")
+        logger.exception("Agent 管线异常 — 完整跟踪:\n%s", traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Agent 管线异常: {type(e).__name__}: {e}")
 
 
 # ── 反馈 / 纠错学习 ─────────────────────────────────────────────────

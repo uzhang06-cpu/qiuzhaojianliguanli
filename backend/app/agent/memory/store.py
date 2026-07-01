@@ -38,12 +38,25 @@ class MemoryStore:
         had_correction: bool = False,
     ) -> AgentConversation:
         """保存一次 Agent 调用记录。"""
+        # 安全序列化：确保 extracted 中的所有值都可 JSON 序列化
+        extracted_json = None
+        if extracted is not None:
+            try:
+                extracted_json = json.dumps(extracted, ensure_ascii=False, default=str)
+            except (TypeError, ValueError) as e:
+                # 降级：将不可序列化的值转字符串
+                sanitized = {
+                    k: str(v) if not isinstance(v, (str, int, float, bool, type(None), list, dict))
+                    else v for k, v in extracted.items()
+                }
+                extracted_json = json.dumps(sanitized, ensure_ascii=False, default=str)
+
         conv = AgentConversation(
             session_id=session_id,
             raw_input=raw_input,
             intent=intent,
             confidence=int(confidence * 100),
-            extracted_json=json.dumps(extracted, ensure_ascii=False) if extracted else None,
+            extracted_json=extracted_json,
             had_correction=1 if had_correction else 0,
         )
         self.db.add(conv)
