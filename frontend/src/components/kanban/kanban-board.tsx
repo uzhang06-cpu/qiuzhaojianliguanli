@@ -29,7 +29,11 @@ export function KanbanBoard() {
   // Group by pipeline stage
   const grouped = useMemo(() => {
     const map = new Map(PIPELINE_STAGES.map((s) => [s.key, [] as Position[]]))
-    filtered.forEach((p) => map.get(p.status)?.push(p))
+    filtered.forEach((p) => {
+      const key = p.status as typeof PIPELINE_STAGES[number]['key']
+      const col = map.get(key)
+      if (col) col.push(p)
+    })
     return map
   }, [filtered])
 
