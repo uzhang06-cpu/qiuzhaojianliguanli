@@ -27,6 +27,9 @@ _INTENT_SKILL_MAP: dict[IntentType, list[SkillType]] = {
         SkillType.DB_OPS,
     ],
     IntentType.UPDATE_INTERVIEW: [
+        # TEXT_PARSING 也跑一遍 — 面试通知里通常同时包含公司/岗位，
+        # 抽出来一并交给前端确认表单预填，用户能一次录入完整信息。
+        SkillType.TEXT_PARSING,
         SkillType.SCHEDULE_PARSING,
         SkillType.DB_OPS,
     ],

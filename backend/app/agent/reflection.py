@@ -124,26 +124,57 @@ def _build_display_fields(
     intent: IntentType,
     confidence: float = 0.8,
 ) -> list[DisplayField]:
-    """根据合并后的数据构造展示字段列表。"""
-    fields = []
+    """
+    根据意图与合并后的数据构造展示字段列表。
 
-    # 按意图决定字段顺序
+    关键设计：即使 AI 没有抽到某个字段的值，也**保留一个空的可编辑输入框**，
+    这样用户可以在确认表单里手动补填公司/岗位/薪资等 AI 遗漏的信息。
+    没抽到的字段 highlight=True，UI 会提示"需确认"。
+    """
+    # 按意图决定该显示哪些字段（顺序也在这里控制）
     if intent == IntentType.CREATE_POSITION:
         field_order = ["company", "position", "base_location", "salary_range", "next_ddl"]
     elif intent == IntentType.UPDATE_INTERVIEW:
-        field_order = ["next_ddl", "interview_platform", "interview_link"]
+        # 更新面试也带上公司/岗位 — 让用户能把面试通知直接补成一条新岗位
+        field_order = ["company", "position", "next_ddl", "interview_platform",
+                       "interview_link", "base_location", "salary_range"]
+    elif intent == IntentType.UPDATE_STATUS:
+        field_order = ["company", "position", "status"]
+    elif intent == IntentType.ADD_NOTES:
+        field_order = ["company", "position", "notes"]
     else:
+        # UNKNOWN / QUERY 等：把已抽到的实体都摆出来
         field_order = list(data.keys())
 
+    fields = []
     for key in field_order:
-        if key in data:
-            fields.append(DisplayField(
-                key=key,
-                label=FIELD_LABELS.get(key, key),
-                value=data[key],
-                confidence=confidence,
-                editable=True,
-                highlight=False,
-            ))
+        raw_value = data.get(key)
+        has_value = raw_value not in (None, "")
+        fields.append(DisplayField(
+            key=key,
+            label=FIELD_LABELS.get(key, key),
+            # 无值时给空串，前端 Input 才能受控地渲染成空框
+            value=raw_value if has_value else "",
+            # 没抽到的字段置信度打 0，UI 会显示黄色告警图标
+            confidence=confidence if has_value else 0.0,
+            editable=True,
+            # 没抽到 → highlight=True，提示用户"需确认/补填"
+            highlight=not has_value,
+        ))
+
+    # 数据里还带了其它抽到但不在 field_order 里的字段？也补到末尾，别丢
+    for key, raw_value in data.items():
+        if key in field_order:
+            continue
+        if raw_value in (None, ""):
+            continue
+        fields.append(DisplayField(
+            key=key,
+            label=FIELD_LABELS.get(key, key),
+            value=raw_value,
+            confidence=confidence,
+            editable=True,
+            highlight=False,
+        ))
 
     return fields
