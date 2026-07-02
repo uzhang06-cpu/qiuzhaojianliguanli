@@ -13,22 +13,26 @@ services:
     startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
 
     envVars:
-      # ── 数据库（二选一） ──────────────────────────────────
-      # 不设 = 用 SQLite（免费版重启后数据会丢，建议配 PG）
+      # ── 数据库（⚠️ 生产环境**必须**配置外部数据库） ──────────────
       #
-      # 方案 A：Render PostgreSQL（同平台，最简单）
-      #   1. Render Dashboard → New + → PostgreSQL
-      #   2. 创建后拿到 Internal Database URL
-      #   3. 粘贴到下面（去掉 # ）
+      # Render 免费 web service 每次冷启动会清空文件系统 → 用 SQLite
+      # 意味着注册的账号在几分钟不活跃后会被"重置"。这是免费方案
+      # 的固有限制，必须走外部持久化数据库。
       #
-      # 方案 B：Supabase（永久免费）
-      #   1. https://supabase.com 注册
-      #   2. New Project → 记下 Database password
-      #   3. 项目 Settings → Database → Connection string (URI)
-      #   4. 把密码填进去，粘贴到下面
+      # 推荐（永久免费额度）：
+      #   • Supabase — https://supabase.com  免费 500MB PG，无停机
+      #   • Neon     — https://neon.tech     免费 3GB PG，自动休眠唤醒
       #
-      # - key: DATABASE_URL
-      #   value: postgresql://user:password@host:5432/dbname
+      # 配置步骤：
+      #   1. 上面任一平台注册并新建 project
+      #   2. 复制 Connection string (URI)  形如
+      #      postgresql://<user>:<password>@<host>:5432/<dbname>
+      #   3. 在 Render Dashboard → 本 service → Environment → Add Env Var
+      #      Key   = DATABASE_URL
+      #      Value = 上面那串 URI
+      #   4. Manual Deploy → 完成后账号数据将持久保存
+      - key: DATABASE_URL
+        sync: false  # 必填，通过 Render Dashboard 输入，不要写死在 yaml 里
 
       # ── LLM: DeepSeek v4 Flash ───────────────────────────
       - key: DEEPSEEK_API_KEY
